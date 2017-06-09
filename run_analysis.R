@@ -154,3 +154,8 @@
         summary_dataset <- summarize_each(grouped_labeled_dataset, funs(mean))
         dim(summary_dataset)
 
+# Writing the final summary_dataset to a txt file
+        write.table(summary_dataset, file = './summary_dataset.txt',row.names = FALSE)
+        
+
+        
