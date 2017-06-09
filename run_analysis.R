@@ -43,6 +43,10 @@
         library(stringr)
         library(Hmisc)
 
+# Set working directory
+        setwd("C:/Users/eo6405/Desktop/Misc - R/Coursera/Getting and Prepping Data/Final Assignment/UCI HAR Dataset")
+        
+        
 # Step 1 - Merge Training and Test data sets to create one data set
 ## Piece together training data
         ## Training Set - activity label
@@ -50,8 +54,6 @@
 
         class(activity_data_train)                      # data frame
         dim(activity_data_train)                        # 7352 records of one variable (activity number)
-
-        colnames(activity_data_train)[1] <- "activity"  # renaming the column to 'activity'
 
         ## Training set - feature vector
         feature_data_train <- read.table("./train/X_train.txt")
@@ -64,9 +66,7 @@
 
         class(subject_train)                            # data frame
         dim(subject_train)                              # 7352 records (subject number 1-30) of 1 variable
-  
-        colnames(subject_train)[1] <- "subject number"  # rename variable to 'subject number'
-
+ 
 
         
         ## Bind columns of activity, subject, feature vector to create Train Data set
@@ -82,8 +82,6 @@
         class(activity_data_test)                      # data frame
         dim(activity_data_test)                        # 2947 records of one variable (activity number)
 
-        colnames(activity_data_test)[1] <- "activity"  # renaming the column to 'activity'
-
         ## Test set - feature vector
         feature_data_test <- read.table("./test/X_test.txt")
 
@@ -95,8 +93,6 @@
 
         class(subject_test)                            # data frame
         dim(subject_test)                              # 7352 records (subject number 1-30) of 1 variable
-
-        colnames(subject_test)[1] <- "subject number"  # rename variable to 'subject number'
 
 
 
@@ -118,17 +114,16 @@
         
         ## Define as column names for Dataset
         feature_names <- as.vector(features$V2)                                 # create feature names as a vector
-        identifier_names <- c("subject number", "activity")                     # create identifiers (subject number and activity number) as a vector
+        identifier_names <- c("subject.number", "activity")                     # create identifiers (subject number and activity number) as a vector
         all_colnames <- append(feature_names, identifier_names, after = 0)      # append identifiers and feature names 
-        colnames(dataset_merged) <- all_colnames                                # set column names in dataset
-        valid_column_names <- make.names(names=names(dataset_merged), unique=TRUE, allow_ = TRUE)       # Validate column names
-        names(dataset_merged) <- valid_column_names
+        valid_column_names <- make.names(all_colnames, unique=TRUE, allow_ = TRUE)
+        colnames(dataset_merged) <- valid_column_names                               # set column names in dataset
         
         ## Search and retain Mean and Standard deviation columns
         relevant_features <- grep("mean()|std()", names(dataset_merged))                ## Define the values which contain Mean and Std. Searching for mean or std
         relevant_columns <- as.vector(append(relevant_features, c(1, 2), after = 0))    ## Preserve the identifier columns
         summary_dataset_merged <- select(dataset_merged, relevant_columns)              ## Subset the data set using dplyr (select)
-        dim(summary_dataset_merged)
+        dim(summary_dataset_merged)                                                     ## 10299 observations of 81 columns
         
 # Step 3 - Use descriptive activity names to name the activities in the dataset (WALKING, WALKING_UPSTAIRS, WALKING_DOWNSTAIRS, SITTING, STANDING, LAYING)
         activity_labels <- read.table("./activity_labels.txt")                                                          ## Load the activity labels
@@ -138,7 +133,18 @@
         
 # Step 4 - appropriately label the dataset with descriptive variable names
         # Variables already named in Step 2 
-        names(labeled_dataset_merged)
+        names(labeled_dataset_merged)           # Current naming
+        names(labeled_dataset_merged) %>%
+                {gsub("^t","time", .,)} %>%                                                     # denote the fact that the feature is derived in time
+                {gsub("^f", "fourier", .,)} %>%                                                 # denote the fact that the feature is fourier transformed
+                {gsub("\\.\\.\\.","\\.", .,)} %>%                                               # reduce the '...'  to '.'
+                {gsub("\\.\\.", "\\.", .,)} %>%                                                 # reduce the '..' to '.'
+                {gsub("mean\\.$", "Mean", .,)} %>%                                              # modify mean at the end of a line to 'Mean'
+                {gsub("mean", "Mean", .,)} %>%                                                  # moidfy mean within a line to 'Mean' for consistency
+                {gsub("std", "StandardDeviation", .,)} %>%                                      # modify 'std' to 'StandardDeviation'
+                {gsub("std\\.$", "StandardDeviation", .,)} %>%                                  # modify 'std' at a line end to 'StandardDeviation'
+                {gsub("meanFreq", "MeanFrequency", .,)} -> names(labeled_dataset_merged)        # modify meanFreq to 'MeanFrequency' and reassign to labels of dataset
+        str(labeled_dataset_merged)
         
 # Step 5 - create a second, independent tidy data set with the average of each variable for each activity and each subjecy
         # Group data first
@@ -146,5 +152,5 @@
         
         # use summarize_each function?
         summary_dataset <- summarize_each(grouped_labeled_dataset, funs(mean))
-        tail(summary_dataset)
+        dim(summary_dataset)
 
